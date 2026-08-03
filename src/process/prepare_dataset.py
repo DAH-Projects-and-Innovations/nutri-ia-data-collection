@@ -1,27 +1,39 @@
+from pathlib import Path
+
 from src.config.dataset import (
+    RAW_IMAGES_DIR,
     TRAIN_DIR,
     VALIDATION_DIR,
+    IMAGE_EXTENSIONS,
+    CLASSES,
 )
 
-from pathlib import Path
-import shutil
+# Création des dossiers train et validation
+TRAIN_DIR.mkdir(parents=True, exist_ok=True)
+VALIDATION_DIR.mkdir(parents=True, exist_ok=True)
 
+print(f"Train directory created: {TRAIN_DIR}")
+print(f"Validation directory created: {VALIDATION_DIR}")
 
-def reset_directory(directory: Path) -> None:
-    """Supprime et recrée un répertoire."""
-    if directory.exists():
-        shutil.rmtree(directory)
-    directory.mkdir(parents=True, exist_ok=True)
+print("\n========== Original Dataset ==========")
 
+total_images = 0
 
-def create_processed_structure() -> None:
-    """Crée la structure train/validation."""
-    reset_directory(TRAIN_DIR)
-    reset_directory(VALIDATION_DIR)
+for class_name in CLASSES:
+    class_dir = RAW_IMAGES_DIR / class_name
 
-    print(f"Train directory created: {TRAIN_DIR}")
-    print(f"Validation directory created: {VALIDATION_DIR}")
+    if not class_dir.exists():
+        print(f"[ERREUR] Dossier introuvable : {class_dir}")
+        continue
 
+    image_files = [
+        img for img in class_dir.iterdir()
+        if img.suffix in IMAGE_EXTENSIONS
+    ]
 
-if __name__ == "__main__":
-    create_processed_structure()
+    print(f"{class_name:<15}: {len(image_files)} images")
+
+    total_images += len(image_files)
+
+print("--------------------------------------")
+print(f"Total : {total_images} images")
