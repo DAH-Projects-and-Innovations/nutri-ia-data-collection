@@ -1,3 +1,4 @@
+import re
 import shutil
 from pathlib import Path
 
@@ -130,22 +131,26 @@ def split_original_dataset():
 # Extraction de l'identifiant d'une image augmentée
 # ==========================================================
 
-import re
-
-def get_original_id(augmented_image: Path):
+def get_original_id(image: Path):
     """
-    Extrait automatiquement l'identifiant de l'image originale.
+    Retourne l'identifiant de l'image originale.
 
-    Exemples :
-    IMG_CIV03_001_pil_env...      -> img_civ03_001
-    IMG_SEN02_001_env_flash...    -> img_sen02_001
-    IMG_SEN02_001_mf_boeuf...     -> img_sen02_001
-    foutou_001_pil...             -> foutou_001
-    kedjenou_001_env...           -> kedjenou_001
-    yassa-poulet_001_sd...        -> yassa-poulet_001
+    Exemples
+
+    IMG_CIV03_001.jpg
+        -> img_civ03_001
+
+    IMG_CIV03_001_pil_env...
+        -> img_civ03_001
+
+    foutou_001.jpg
+        -> foutou_001
+
+    foutou_001_sd...
+        -> foutou_001
     """
 
-    stem = augmented_image.stem.lower()
+    stem = image.stem.lower()
 
     match = re.match(
         r"^(img_[a-z0-9]+_\d{3}|[a-z-]+_\d{3})",
@@ -156,7 +161,6 @@ def get_original_id(augmented_image: Path):
         return match.group(1)
 
     return stem
-
 
 # ==========================================================
 # Ajout des augmentations
@@ -178,12 +182,11 @@ def add_augmented_images(train_mapping):
 
         train_folder = TRAIN_DIR / class_name
 
+        # identifiants des images originales présentes dans le train
         train_ids = {
-            image.stem.lower()
-            for image in train_mapping[class_name]
+            get_original_id(img)
+            for img in train_mapping[class_name]
         }
-
-        
 
         copied = 0
 
@@ -204,25 +207,8 @@ def add_augmented_images(train_mapping):
 
         print(f"{class_name:<15}: +{copied} images")
 
-        if class_name == "mafe":
-            train_ids = {img.stem.lower() for img in train_mapping[class_name]}
-
-        augmented_ids = {
-            get_original_id(img)
-            for img in get_images(augmented_dir)
-        }
-
-        missing = sorted(train_ids - augmented_ids)
-
-        print("\nImages du train sans augmentation :")
-        print(f"Nombre : {len(missing)}")
-
-        if missing:
-            print(missing[:20])   # affiche les 20 premières
-
     print("---------------------------------------")
     print(f"Total ajouté : {total_augmented}\n")
-
 
 # ==========================================================
 # Résumé final
